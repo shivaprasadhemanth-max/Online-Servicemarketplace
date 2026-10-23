@@ -35,7 +35,41 @@ function authModal(mode="login",role="customer") {
  const isLogin=mode==="login";
  showModal(`<div class="eyebrow">${isLogin?"WELCOME BACK":"START HERE"}</div><h2 id="modalTitle">${isLogin?"Good to see you again.":"Create your account."}</h2><p class="modal-intro">${isLogin?"Log in to manage your bookings and find your next trusted professional.":"Join ServiceNest to book services or list your professional skills."}</p><div id="formError"></div><form id="authForm">${isLogin?"":`<div class="field"><label for="fullName">Full name</label><input id="fullName" name="name" required autocomplete="name" placeholder="Your name"></div>`}<div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" required minlength="6" autocomplete="${isLogin?"current-password":"new-password"}" placeholder="At least 6 characters"></div>${isLogin?"":`<div class="field"><label for="role">I want to</label><select id="role" name="role"><option value="${role==="provider"?"provider":"customer"}">${role==="provider"?"Offer my services":"Book services"}</option><option value="${role==="provider"?"customer":"provider"}">${role==="provider"?"Book services":"Offer my services"}</option></select></div>`}<button class="btn btn-primary" type="submit">${isLogin?"Log in":"Create account"} <span>→</span></button></form><div class="modal-switch">${isLogin?"New to ServiceNest?":"Already have an account?"} <button class="link-button" id="switchAuth">${isLogin?"Create an account":"Log in"}</button></div>`);
  $("#switchAuth").addEventListener("click",()=>authModal(isLogin?"register":"login",role));
- $("#authForm").addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(e.currentTarget);const payload=Object.fromEntries(fd.entries());try{const data=await api(isLogin?"/api/login":"/api/register",{method:"POST",body:JSON.stringify(payload)});state.user=data.user;renderAuth();closeModal();toast(`Welcome${state.user.name?" back, "+state.user.name.split(" ")[0]:""}!`);if(state.user.role==="provider")showProviderDashboard();}catch(err){$("#formError").innerHTML=`<div class="form-error">${escapeHTML(err.message)}</div>`;}});
+
+ $("#authForm").addEventListener("submit", async e => {
+   e.preventDefault();
+
+   const fd = new FormData(e.currentTarget);
+   const payload = Object.fromEntries(fd.entries());
+
+   try {
+     const data = await api(
+       isLogin ? "/api/login" : "/api/register",
+       {
+         method: "POST",
+         body: JSON.stringify(payload)
+       }
+     );
+
+     state.user = data.user;
+     renderAuth();
+     closeModal();
+
+     toast(`Welcome${state.user.name
+       ? ", " + state.user.name.split(" ")[0]
+       : ""}!`);
+
+     if (state.user.role === "provider") {
+       showProviderDashboard();
+     } else if (state.selectedService) {
+       openBooking(state.selectedService.id);
+     }
+   } catch (err) {
+     $("#formError").innerHTML =
+       `<div class="form-error">${escapeHTML(err.message)}</div>`;
+   }
+ });
+
 }
 function renderAuth() {
  const area=$("#authArea");
